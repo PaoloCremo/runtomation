@@ -7,192 +7,141 @@ df_parameters = rs.read_sheet()
 with open('original.ini', 'r')  as f:
     file = f.read()
 
-def find_par(file : str, 
-             par_name : str):
-    
-    par_names = ['injection-dict', 'prior-dict']
-    if par_name not in par_names:
-        raise ValueError(f'"par_name" should be on of {par_names}, not "{par_name}"')
-    
-    start_point = file.find(par_name)
-    end_point = start_point + file[start_point:].find('}\n') + 1 
-    paragraph = file[start_point:end_point]
-    return paragraph
+# new_file = '\n'.join(lines)
+# print(new_file)
 
-def exact_word(file, word):
-    '''
-    to do: if there are not correspondences!
-    '''
-    
-    exact = False
-    start = 0
-
-    while not exact:
-        start = start + file[start:].find(word)
-        end = start + len(word)
-        if end > len(file):
-            raise ValueError('no correspondence found')
-        elif file[start-1].isalpha() or file[end].isalpha():
-            start = start + len(word)
-        elif file[start:end] == word:
-            exact = True
-    
-    return start, end
-
-def find_next_number(file, start_index, decimal='.'):
-    
-    f = file[start_index:]
-    cross = 0
-    ind = 0
-    while cross < 2:
-        if cross == 0 and (f[ind].isnumeric() or f[ind] == '-'):
-            start = ind
-            cross += 1
-        elif cross == 1 and not f[ind].isnumeric() and not f[ind] == decimal:
-            end = ind
-            cross += 1
-        ind += 1
-
-    return start_index + start, start_index + end
-
-def add_new_value_inj(paragraph : str, 
-                      parameter : str, 
-                      value):
-    
-    start, end_name = exact_word(paragraph, parameter)
-    start_val, end = find_next_number(paragraph, end_name)
-    
-    name = paragraph[start:end_name]
-    all_par = paragraph[start:end]
-    val = paragraph[start_val:end]
-    
-    all_par_new = all_par.replace(val, f' {value}')
-    paragraph = paragraph.replace(all_par, all_par_new)
-    
-    return paragraph
-
-def add_new_value_prior(paragraph : str, 
-                        parameter : str, 
-                        value_min, value_max, new_prior_type):
-    
-    parameter = parameter.replace('_', '-')
-    
-    if parameter in paragraph:
-        start, end_name = exact_word(paragraph, parameter)
-    
-        end_type = end_name + paragraph[end_name:].find('(')
-        smin, emin = find_next_number(paragraph, end_type + exact_word(paragraph[end_type:], 'minimum')[1])
-        smax, emax = find_next_number(paragraph, end_type + exact_word(paragraph[end_type:], 'maximum')[1])
-        end = end_name + paragraph[end_name:].find(')')
-        
-        name = paragraph[start:end_name]
-        all_par = paragraph[start:end+1]
-        
-        val = paragraph[end_type+1:end] 
-        minimum = paragraph[smin:emin]
-        maximum = paragraph[smax:emax]
-    
-        prior_type = paragraph[end_name+1:end_type].replace(" ", "")
-        
-        new_par = paragraph.replace(prior_type, new_prior_type)
-        new_val = val
-        change = 0
-        
-
-        round_val = 3
-        if not round(float(minimum), round_val) == round(float(value_min), round_val):
-            new_val = val.replace(minimum, str(value_min))
-            change += 1
-        if not round(float(maximum), round_val) == round(float(value_max), round_val):
-            new_val = new_val.replace(maximum, str(value_max))
-            change += 1
-        if change > 0:
-            new_par = new_par.replace(val, new_val)
-    
-        return new_par
-    
+def find_feature(lines : list,
+                 feature : str):
+    features = ["injection-dict", "prior-dict", "trigger-time", "injection-waveform-approximant", "waveform-approximant",
+                "numerical-relativity-file", "label", "outdir", "prior-dict"]
+    line_number = -1
+    if feature not in features:
+        raise ValueError(f'"{feature}" not supported. "feature" has to be one of {features}.')
     else:
-        return None
+        for n,line in enumerate(lines):
+            # print(f'INIZIO {n}\n{line}\nFINE\n')
+            if feature in line and line[:len(feature)] == feature:
+                line_number = n
 
+    return line_number
 
-def update_injection(old_ini, df: pd.DataFrame, parameters, ici):
+def update_trigger_time(lines : list, df, ici : int):
 
-    par_inj = find_par(old_ini, 'injection-dict')
+    l = find_feature(lines, "trigger-time")
+    trigger_time = float(df[ici][df[0] == "geocent_time"].values[0])
+    new_line = f'trigger-time={trigger_time}'
+    lines[l] = new_line
     
-    for nr in range(3, 26):
-        parameter = parameters.loc[nr]
-        if parameter in par_inj:
-            value = df.loc[nr][ici]
-            par_inj = add_new_value_inj(par_inj, parameter, value)
+    return None
 
-    new_ini = old_ini.replace(find_par(old_ini, 'injection-dict'), par_inj)
-    
-    return new_ini
-
-def update_priors(old_ini, df: pd.DataFrame, parameters, ici):
-
-    par_pri = find_par(old_ini, 'prior-dict')
-    
-    for nr in range(3, 27):
-        parameter = parameters.loc[nr]
-        if parameter in par_pri and parameter != 'theta_jn':
-            prior_type = df.loc[nr][ici + 1]
-            minimum = df.loc[nr][ici + 2]
-            maximum = df.loc[nr][ici + 3]
-            par_pri = add_new_value_prior(par_pri, parameter, minimum, maximum, prior_type)
-
-    new_ini = old_ini.replace(find_par(old_ini, 'prior-dict'), par_pri)
-    
-    return new_ini
-
-def update_label_outdir(old_ini, injection_number):
-
-    new_ini = old_ini.replace('label=gwmat0', f'label=gwmat{injection_number}')
-    new_ini = new_ini.replace('outdir=/mnt/home/users/uib54_res/resh000287/lensing_runs/mlVSprec/gwmat0',
-                              f'outdir=/mnt/home/users/uib54_res/resh000287/lensing_runs/mlVSprec/gwmat{injection_number}')
-    
-    return new_ini
-
-def update_waveform_approximant(old_ini, df, ici, which):
+def update_wf_approx(lines : list, df, ici : int, which):
     whichs = ["injection-waveform-approximant", "waveform-approximant"]
     if which not in whichs:
         raise ValueError(f'"which has to be one of {whichs}. Not {which}.')
-    start, end_label = exact_word(old_ini, which)
-    end = end_label + old_ini[end_label:].find("\n")
-    all = old_ini[start:end]
     
+    l = find_feature(lines, which)
+    wf_approximant = df[ici][df[0] == "waveform-approximant"].values[0]
     if which == "injection-waveform-approximant":
-        wf_approx = df[ici][28]
+        wf_approximant = df[ici][df[0] == "waveform-approximant"].values[0]
+        if not "NR_" in wf_approximant:
+            lf = find_feature(lines, "numerical-relativity-file")
+            lines.pop(lf)
     else:
-        wf_approx = df[ici][28]
+        wf_approximant = df[ici+1][df[0] == "waveform-approximant"].values[0]
 
-    new_ini = old_ini.replace(all, f"{which} = {wf_approx}")
-
-    return new_ini
-
-def create_ini(old_ini, 
-               df_parameters : pd.DataFrame,
-               injection_number):
+    new_line = f'{which}={wf_approximant}'
+    lines[l] = new_line
     
-    # initial column index
+    return None
+
+def get_dict(lines : str):
+    l = find_feature(lines=lines, feature="injection-dict")
+    dict_str = lines[l]
+    if ".," in dict_str:
+        dict_str = dict_str.replace(".,", ".0,")
+    start_dict = dict_str.find('{')
+    only_dict = dict_str[start_dict:].replace("'", '"')
+    injection_dict = json.loads(only_dict)
+    
+    return injection_dict
+
+
+def update_injection(lines, df, ici):
+    l = find_feature(lines, "injection-dict")
+    dict = get_dict(lines)
+
+    new_dict = {}
+    for n in range(3,28):
+        new_dict[df[0][n]] = float(df[ici][n])
+    dict.update(new_dict)
+    new_line = f'injection-dict={dict}'
+    lines[l] = new_line
+    
+
+    return None
+
+def update_label_outdir(lines, injection_number):
+
+    l = find_feature(lines, "label")
+    lines[l] = f"label=gwmat{injection_number}"
+    l = find_feature(lines, "outdir")
+    lines[l] = f"outdir=/mnt/home/users/uib54_res/resh000287/lensing_runs/mlVSprec/gwmat{injection_number}"
+    
+    return None
+
+def get_priors(lines):
+    l = find_feature(lines, "prior-dict")
+    prior_dict = lines[l]
+    only_dict = prior_dict[len("prior-dict={"):-1]
+
+    return only_dict
+
+def update_priors(lines, df):
+    only_dict = get_priors(lines)
+    # get parameters
+    lines_dict = only_dict.split('), ')
+    # '), '.join(lines_dict)
+    lines_dict
+    params = []
+    for line in lines_dict:
+        params.append(line.split(':')[0].replace('-', '_'))
+
+    new_dict = []
+    for ln, param in enumerate(params):
+        df_line = df[df[0] == param]
+        if 'latex_label' in lines_dict[ln]:
+            lls = lines_dict[ln].split(',')
+            for llsline in lls:
+                if 'latex_label' in llsline:
+                    latex_line = llsline
+            new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}', {latex_line}, boundary=None)")
+        else:
+            new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}', boundary=None)")
+            
+    l = find_feature(lines, "prior-dict")
+    lines[l] = f"prior-dict={{{', '.join(new_dict)} }}"
+
+    return None
+
+def create_new_ini(old_ini, 
+                   df_parameters : pd.DataFrame,
+                   injection_number):
     ici = (injection_number - 1) * 4 + 1
-    df = df_parameters[range(ici, ici+4)]
-    params = df_parameters[0][3:-1]
+    lines = file.split('\n')
     
-    # update injection values
-    new_ini = update_injection(old_ini, df, params, ici)
-    new_ini = update_priors(new_ini, df, params, ici)
-    
-    # update waveform approximant
-    for wf_approx in ["injection-waveform-approximant", "waveform-approximant"]:
-        new_ini = update_waveform_approximant(new_ini, df_parameters, ici, wf_approx)
-        
-    # update label and location
-    new_ini = update_label_outdir(new_ini, injection_number)
+    update_trigger_time(lines=lines, df=df_parameters, ici=ici)
+    for which in ["injection-waveform-approximant", "waveform-approximant"]:
+        update_wf_approx(lines=lines, df=df_parameters, ici=ici, which=which)
+    update_injection(lines=lines, df=df_parameters, ici=ici)
+    update_label_outdir(lines=lines, injection_number=injection_number)
+    update_priors(lines=lines, df=df_parameters)
+
+    new_ini = '\n'.join(lines)
 
     return new_ini
 
-def write_new_ini(new_ini, injection_number):
+def write_new_ini(injection_number):
+    new_ini = create_new_ini(file, df_parameters, injection_number)
     with open(f'gwmat_{injection_number}.ini', 'w') as f:
         f.write(new_ini)
 
