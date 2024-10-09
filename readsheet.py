@@ -10,13 +10,15 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+# The ID of the spreadsheet.
+from data import SPREADSHEET_ID
+
 import pandas as pd
 
 # If modifying these scopes, delete the file token.json.
 SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
-# The ID and range of a sample spreadsheet.
-# SAMPLE_SPREADSHEET_ID = data.spreadsheet_id # to be corrected!
+
 
 def login():
     # cd to where crediatials are stored
@@ -49,8 +51,8 @@ def login():
 
 creds = login()
 
-def read_sheet(SAMPLE_SPREADSHEET_ID='1iDE4SvDQFVPWnecllMPMQZlZceX4okxAJzf2Dc_Vtd0', 
-               SAMPLE_RANGE_NAME='Sheet1!B2:AA30'): # H999
+def read_sheet(SPREADSHEET_ID='1iDE4SvDQFVPWnecllMPMQZlZceX4okxAJzf2Dc_Vtd0', 
+               RANGE_NAME='Sheet1!B2:AA30'): # H999
     '''
     try 
     except HttpError as err:
@@ -59,8 +61,8 @@ def read_sheet(SAMPLE_SPREADSHEET_ID='1iDE4SvDQFVPWnecllMPMQZlZceX4okxAJzf2Dc_Vt
     service = build('sheets', 'v4', credentials=creds)
     # Call the Sheets API
     sheet = service.spreadsheets()
-    result = sheet.values().get(spreadsheetId=SAMPLE_SPREADSHEET_ID,
-                                range=SAMPLE_RANGE_NAME).execute()
+    result = sheet.values().get(spreadsheetId=SPREADSHEET_ID,
+                                range=RANGE_NAME).execute()
     df = pd.DataFrame(data=result['values'])
     return df
     # df = pd.DataFrame(columns=result['values'][0], data=result['values'][1:])
