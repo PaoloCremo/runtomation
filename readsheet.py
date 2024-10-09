@@ -52,7 +52,7 @@ def login():
 creds = login()
 
 def read_sheet(SPREADSHEET_ID='1iDE4SvDQFVPWnecllMPMQZlZceX4okxAJzf2Dc_Vtd0', 
-               RANGE_NAME='Sheet1!B2:AA30'): # H999
+               RANGE_NAME='Sheet1!B2:ZZ32'): # H999
     '''
     try 
     except HttpError as err:
