@@ -1,3 +1,4 @@
+import json
 import pandas as pd
 import lalsimulation
 import readsheet as rs
@@ -96,7 +97,7 @@ def get_priors(lines):
 
     return only_dict
 
-def update_priors(lines, df):
+def update_priors(lines, df, ici):
     only_dict = get_priors(lines)
     # get parameters
     lines_dict = only_dict.split('), ')
@@ -134,7 +135,7 @@ def create_new_ini(old_ini,
         update_wf_approx(lines=lines, df=df_parameters, ici=ici, which=which)
     update_injection(lines=lines, df=df_parameters, ici=ici)
     update_label_outdir(lines=lines, injection_number=injection_number)
-    update_priors(lines=lines, df=df_parameters)
+    update_priors(lines=lines, df=df_parameters, ici=ici)
 
     new_ini = '\n'.join(lines)
 
