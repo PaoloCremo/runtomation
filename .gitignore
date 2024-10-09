@@ -166,3 +166,4 @@ workspace.ipynb
 token.json
 credentials.json
 data.py
+gwmat*.ini
