@@ -12,4 +12,4 @@ parser.add_argument('-in', '--injectionnumber', type=int, required=True)
 inj_num = parser.parse_args().injectionnumber
 
 if __name__ == "__main__":
-    fn.write_new_ini(fn.create_ini(fn.file, fn.df_parameters, inj_num), inj_num)
+    fn.write_new_ini(inj_num)
