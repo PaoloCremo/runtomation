@@ -8,8 +8,6 @@ df_parameters = rs.read_sheet()
 with open('original.ini', 'r')  as f:
     file = f.read()
 
-# new_file = '\n'.join(lines)
-# print(new_file)
 
 def find_feature(lines : list,
                  feature : str):
@@ -20,7 +18,6 @@ def find_feature(lines : list,
         raise ValueError(f'"{feature}" not supported. "feature" has to be one of {features}.')
     else:
         for n,line in enumerate(lines):
-            # print(f'INIZIO {n}\n{line}\nFINE\n')
             if feature in line and line[:len(feature)] == feature:
                 line_number = n
 
@@ -101,8 +98,6 @@ def update_priors(lines, df, ici):
     only_dict = get_priors(lines)
     # get parameters
     lines_dict = only_dict.split('), ')
-    # '), '.join(lines_dict)
-    lines_dict
     params = []
     for line in lines_dict:
         params.append(line.split(':')[0].replace('-', '_'))
@@ -111,14 +106,9 @@ def update_priors(lines, df, ici):
     for ln, param in enumerate(params):
         df_line = df[df[0] == param]
         new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}')")
-        # if 'latex_label' in lines_dict[ln]:
         lls = lines_dict[ln].split(',')
         for llsline in lls:
-            if 'latex_label' in llsline:
-                new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
-            if 'boundary' in llsline:
-                new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
-            if 'unit' in llsline:
+            if 'latex_label' in llsline or 'boundary' in llsline or 'unit' in llsline:
                 new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
         if param == 'yl':
             new_dict[-1] = new_dict[-1][:-2] + f', alpha=1.)'
