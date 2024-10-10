@@ -110,17 +110,22 @@ def update_priors(lines, df, ici):
     new_dict = []
     for ln, param in enumerate(params):
         df_line = df[df[0] == param]
-        if 'latex_label' in lines_dict[ln]:
-            lls = lines_dict[ln].split(',')
-            for llsline in lls:
-                if 'latex_label' in llsline:
-                    latex_line = llsline
-            new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}', {latex_line}, boundary=None)")
-        else:
-            new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}', boundary=None)")
+        new_dict.append(f"{param.replace('_', '-')}: {df_line[ici+1].values[0]}(minimum={df_line[ici+2].values[0]}, maximum={df_line[ici+3].values[0]}, name='{param}')")
+        # if 'latex_label' in lines_dict[ln]:
+        lls = lines_dict[ln].split(',')
+        for llsline in lls:
+            if 'latex_label' in llsline:
+                new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
+            if 'boundary' in llsline:
+                new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
+            if 'unit' in llsline:
+                new_dict[-1] = new_dict[-1][:-1] + f', {llsline})'
+        if param == 'yl':
+            new_dict[-1] = new_dict[-1][:-2] + f', alpha=1.)'
+            
             
     l = find_feature(lines, "prior-dict")
-    lines[l] = f"prior-dict={{{', '.join(new_dict)} }}"
+    lines[l] = f"prior-dict={{{', '.join(new_dict)}}}"
 
     return None
 
