@@ -143,7 +143,7 @@ def write_new_ini(injection_number):
 
 
 def get_l0par(injection_number, all=False):
-    df = rs.read_sheet(SAMPLE_RANGE_NAME='Sheet1!B5:AA61')
+    df = rs.read_sheet(RANGE_NAME='Sheet1!B5:ZZ63')
     df.index = df[0]
     df = df.drop(0, axis=1)
     ici = (injection_number - 1) * 4 + 1
