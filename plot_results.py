@@ -54,12 +54,12 @@ def get_file_path(folder : str, run : str):
 
     # runs = [0, 1, 'gwmat2/', 'gwmat3/', 'gwmat4/', 'gwmat5/', 'gwmat6/', 'gwmat7/', 'gwmat8/', 'gwmat9/']
     # run = runs[run_number]
-    
+
     path_run = folder + run
     for ts in os.listdir(path_run):
          if 'hdf5' in ts or 'json' in ts and 'merge' in ts:
-             file = ts   
-        
+             file = ts
+
     file_path = path_run + file
 
     return file_path, path_run
@@ -176,4 +176,7 @@ if __name__ == "__main__":
     else:
         raise ValueError(f'Save has to be "yes" or "no", not {save}')
     
+    print(folder)
+    print(folder + run)
+
     main(folder=folder, run=run, save=save)
