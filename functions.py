@@ -122,7 +122,7 @@ def update_priors(lines, df, ici):
 def create_new_ini(old_ini, 
                    df_parameters : pd.DataFrame,
                    injection_number):
-    ici = (injection_number - 1) * 4 + 1
+    ici = injection_number * 4 + 1
     lines = file.split('\n')
     
     update_trigger_time(lines=lines, df=df_parameters, ici=ici)
@@ -146,7 +146,7 @@ def get_l0par(injection_number, all=False):
     df = rs.read_sheet(RANGE_NAME='Sheet1!B5:ZZ63')
     df.index = df[0]
     df = df.drop(0, axis=1)
-    ici = (injection_number - 1) * 4 + 1
+    ici = injection_number * 4 + 1
     
     
     thetajn, phijl, s1pol, s2pol, s12_deltaphi, spin1_a, spin2_a =  lalsimulation.SimInspiralTransformPrecessingWvf2PE(float(df[ici]['incl']), 
