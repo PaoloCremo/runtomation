@@ -22,12 +22,6 @@ SCOPES = ['https://www.googleapis.com/auth/spreadsheets.readonly']
 
 def login():
     # cd to where crediatials are stored
-    '''
-    cwd = os.getcwd()
-    gitname = 'raspberry'
-    gitpath = os.popen('$HOME/.find_git_path.sh ' + gitname).read()[:-1]
-    os.chdir(gitpath + '/investments/codes/google')
-    '''
 
     creds = None
     # The file token.json stores the user's access and refresh tokens, and is
@@ -65,30 +59,7 @@ def read_sheet(SPREADSHEET_ID='1iDE4SvDQFVPWnecllMPMQZlZceX4okxAJzf2Dc_Vtd0',
                                 range=RANGE_NAME).execute()
     df = pd.DataFrame(data=result['values'])
     return df
-    # df = pd.DataFrame(columns=result['values'][0], data=result['values'][1:])
 
-
-
-'''    
-    df.dropna(inplace=True)
-    df.rename(mapper={'€':'amount'}, axis=1, inplace=True)
-    for col in df.columns[3:8]:
-        for i in range(len(df)):
-            try:
-                df[col].iloc[i] = float(df[col].iloc[i].replace(',', ''))
-            except ValueError:
-                df[col].iloc[i] = None
-    # '' if amount is none then search for other currencies and exchange
-    df_none = df[pd.isna(df.amount)]
-    cols = df.columns[3:]
-    if len(df_none)>0:
-        for i in range(len(df_none)):
-            pd.isna(df_none[cols].iloc[i])
-    # ''
-    df.set_index('date', inplace=True)
-    df = df[df.columns[:3]]
-    return df
-'''
 
 def get_long_expenses():
     import sys
